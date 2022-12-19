@@ -86,13 +86,16 @@ module.exports = {
             return res.status(400).json({ msg: error.message, status: false })
         }
     },
-    getAllUsers: () => {
+    getAllUsers: (req, res) => {
         try {
-            findUser().then((result) => {
-
+            const id = req.params.id
+            findUser({ id }, 'many').then((result) => {
+                return res.status(201).json({ user: result, status: true })
+            }).catch((error) => {
+                return res.status(400).json({ msg: error.message, status: false })
             })
         } catch (error) {
-
+            return res.status(400).json({ msg: error.message, status: false })
         }
     }
 }
