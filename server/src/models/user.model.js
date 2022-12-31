@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema({
                 type: String,
                 default: "",
         },
+        listFriend: [{
+                type: String,
+                ref: "Users",
+        }]
 })
 
 module.exports.User = mongoose.model("Users", userSchema, "Users")

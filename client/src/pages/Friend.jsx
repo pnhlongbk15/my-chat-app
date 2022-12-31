@@ -6,25 +6,33 @@ import { io } from "socket.io-client";
 
 import { host, allUsersRoute } from "../utils/APIRoutes";
 
-import Contacts from "../components/Contacts";
+import ContactFriends from "../components/ContactFriends";
 import Welcome from "../components/Welcome";
-import ChatContainer from "../components/ChatContainer";
+import FriendChat from "../components/FriendChat";
 
-export default function Chat() {
+export default function Friend() {
   const socket = useRef();
   const navigate = useNavigate();
-  const [contacts, setContacts] = useState([]);
-  const [currentUser, setCurrentUser] = useState(undefined)
+  const [currentUser, setCurrentUser] = useState(undefined);
+  const [friends, setFriends] = useState([]);
   const [currentChat, setCurrnetChat] = useState(undefined);
+  const [statusChat, setStatusChat] = useState(undefined);
 
-  const handleChatChange = (contact) => {
-    setCurrnetChat(contact);
+  const handleChatChange = (friend) => {
+    setCurrnetChat(friend);
+    if (friend) {
+      socket.current.emit("check-status", friend.username)
+      socket.current.on("response-status", status => {
+        setStatusChat(status)
+      })
+    }
   };
+
 
   useEffect(() => {
     if (currentUser) {
       socket.current = io(host);
-      socket.current.emit("add-user", currentUser._id)
+      socket.current.emit("add-user", currentUser.username)
     }
   }, [currentUser])
 
@@ -42,8 +50,12 @@ export default function Chat() {
     (async function () {
       if (currentUser) {
         if (currentUser.isAvatarImageSet) {
-          const { data } = await axios.get(`${allUsersRoute}/${currentUser._id}`);
-          data.status && setContacts(data.user)
+          try {
+            const { data } = await axios.get(`${allUsersRoute}/${currentUser._id}`)
+            data.status && setFriends(data.listFriend)
+          } catch (error) {
+            console.log(error)
+          }
         } else {
           navigate("/setAvatar")
         }
@@ -51,23 +63,27 @@ export default function Chat() {
     })()
   }, [currentUser])
 
+
+
   return (
     <>
       <Container>
         <div className="container">
-          <Contacts
-            contacts={contacts}
+          <ContactFriends
             currentUser={currentUser}
+            contacts={friends}
             changeChat={handleChatChange}
           />
-          {currentChat === undefined ? (
-            <Welcome currentUser={currentUser} />
-          ) : (
-            <ChatContainer
+          {currentChat ? (
+            <FriendChat
+              statusChat={statusChat}
               currentChat={currentChat}
               currentUser={currentUser}
               socket={socket}
             />
+
+          ) : (
+            <Welcome currentUser={currentUser} />
           )}
 
         </div>

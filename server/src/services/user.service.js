@@ -11,19 +11,30 @@ module.exports = {
                case "username":
                   processSearch = User.findOne(info)
                   break;
-
+               default:
+                  processSearch = User.findOne({ _id: mongoose.Types.ObjectId(info.id) })
+                     .select([
+                        "email",
+                        "username",
+                        "avatarImage",
+                        "listFriend",
+                        "_id",
+                     ])
             }
             break;
          case 'many':
             switch (Object.keys(info)[0]) {
 
                default:
-                  processSearch = User.find({ _id: { $ne: mongoose.Types.ObjectId(info.id) } }).select([
-                     "email",
-                     "username",
-                     "avatarImage",
-                     "_id",
-                  ])
+                  processSearch = User.findOne({ _id: mongoose.Types.ObjectId(info.id) })
+                     .populate('listFriend', 'email username avatarImage isAvatarImageSet')
+               // processSearch = User.find({ _id: { $ne: mongoose.Types.ObjectId(info.id) } })
+               //    .select([
+               //       "email",
+               //       "username",
+               //       "avatarImage",
+               //       "_id",
+               //    ])
             }
             break;
       }
@@ -53,5 +64,5 @@ module.exports = {
             reject(error)
          })
       })
-   }
+   },
 }

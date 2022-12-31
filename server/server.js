@@ -2,6 +2,7 @@ const express = require('express')
 const mongoose = require('mongoose')
 const cors = require('cors')
 const socket = require('socket.io')
+const { handleSocket } = require("./src/sockets")
 
 const app = express()
 require('dotenv').config()
@@ -34,24 +35,8 @@ const io = socket(server, {
                 credentials: true,
         }
 })
-global.onlineUsers = new Map();
+handleSocket(io)
 
-io.on("connection", (socket) => {
-        global.chatSocket = socket;
-        socket.on("add-user", (userId) => {
-                onlineUsers.set(userId, socket.id);
-        })
-
-        socket.on("send-msg", (data) => {
-                const sendUserSocket = onlineUsers.get(data.to);
-                console.log('external',sendUserSocket)
-
-                if (sendUserSocket) {
-                        console.log('internal',sendUserSocket)
-                        socket.to(sendUserSocket).emit("msg-recieve", data.messages)
-                }
-        })
-})
 
 app.use("/api", require("./src/routes"))
 

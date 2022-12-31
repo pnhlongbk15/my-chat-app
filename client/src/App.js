@@ -4,7 +4,10 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Register from './pages/Register'
 import Login from './pages/Login'
 import SetAvatar from './pages/SetAvatar'
-import Chat from './pages/Chat'
+import Friend from './pages/Friend'
+import Room from './pages/Room'
+
+import Dashboard from './pages/Dashboard'
 
 const App = () => {
    return (
@@ -13,7 +16,9 @@ const App = () => {
             <Route path='/register' element={<Register />} />
             <Route path='/login' element={<Login />} />
             <Route path='/setAvatar' element={<SetAvatar />} />
-            <Route path='/' element={<Chat />} />
+            <Route path='/' element={<Dashboard />} />
+            <Route path='/friend' element={<Friend />} />
+            <Route path='/room' element={<Room />} />
          </Routes>
       </Router>
    )

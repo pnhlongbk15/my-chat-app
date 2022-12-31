@@ -1,21 +1,59 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+
 import styled from "styled-components";
+import axios from "axios";
 
 import Logo from "../assets/logo.svg";
+import Search from "./Search";
+import { searchRoute, addFriendRoute } from "../utils/APIRoutes";
+import AddIcon from '@mui/icons-material/Add';
+import DoneIcon from '@mui/icons-material/Done';
 
-export default function Contacts({ contacts, currentUser, changeChat }) {
+export default function ContactFriends({ contacts, currentUser, changeChat }) {
   const [currentUserName, setCurrentUserName] = useState(undefined);
   const [currentUserImage, setCurrentUserImage] = useState(undefined);
-  const [currentSelected, setCurrentSelected] = useState(undefined);
+  const [chatSelected, setChatSelected] = useState(undefined);
+  const [onSearch, setOnSearch] = useState(false);
+  const [searched, setSearched] = useState([])
+  const search = useRef();
+  const [isFriend, setIsFriend] = useState(false);
 
   const changeCurrentChat = (index, contact) => {
-    setCurrentSelected(index);
+    if (onSearch) {
+      contacts.forEach((contact, index) => {
+        if (contact.username === searched[0].username) {
+          contacts.splice(index, 1)
+        }
+      })
+      contacts.unshift(...searched)
+      setOnSearch(false)
+    }
+
+    setChatSelected(index);
     changeChat(contact);
   };
 
+
+  const handleSearch = async (e) => {
+    e.preventDefault()
+    setOnSearch(true)
+    const username = search.current.value;
+    const { data } = await axios.get(`${searchRoute}/${username}`)
+    if (currentUser.listFriend.includes(data.user._id)) {
+      setIsFriend(true)
+    }
+    setSearched([data.user])
+  }
+
+  const addFriend = async (contact) => {
+    const { data } = await axios.post(addFriendRoute, {
+      userId: currentUser._id,
+      friendId: contact._id
+    })
+  }
+
   useEffect(() => {
     if (currentUser) {
-      console.log(currentUser.username)
       setCurrentUserImage(currentUser.avatarImage);
       setCurrentUserName(currentUser.username);
     }
@@ -29,24 +67,31 @@ export default function Contacts({ contacts, currentUser, changeChat }) {
             <img src={Logo} alt="logo" />
             <h3>snappy</h3>
           </div>
-          <div className="contacts">
-            {contacts.map((contact, index) => (
+          <div className="contact">
+            <Search handleSearch={handleSearch} useRef={search} />
+            {(function () {
+              return onSearch ? searched : contacts
+            })().map((contact, index) => (
               <div
-                className={`contact ${
-                  index === currentSelected ? "selected" : ""
-                }`}
+                className={`contact ${index === chatSelected ? "selected" : ""
+                  }`}
                 key={index}
                 onClick={() => changeCurrentChat(index, contact)}
               >
                 <div className="avatar">
                   <img
                     alt="avatar"
-                    src={`data:image/svg+xml;base64,${contact.avatarImage}`}
+                    src={`data:image/svg+xml;base64,${contact?.avatarImage}`}
                   />
                 </div>
                 <div className="username">
-                  <h3>{contact.username}</h3>
+                  <h3>{contact?.username}</h3>
                 </div>
+                {onSearch &&
+                  <div className="add">
+                    {isFriend ? <DoneIcon color="secondary" /> : <AddIcon color="secondary" onClick={() => addFriend(contact)} />}
+                  </div>
+                }
               </div>
             ))}
           </div>
@@ -85,7 +130,7 @@ const Container = styled.div`
       text-transform: uppercase;
     }
   }
-  .contacts {
+  .contact {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -97,6 +142,23 @@ const Container = styled.div`
         background-color: #ffffff39;
         width: 0.1rem;
         border-radius: 1rem;
+      }
+    }
+    .switch-box {
+      display: flex;
+      width: 100%;
+      gap: 0.4rem;
+      padding: 0 0.8rem;
+      button {
+        flex: 1;
+        height: 2rem;
+        background-color: #ffffff39;
+        color: white;
+        cursor: pointer;
+
+        &.selected {
+          background-color: #9186f3;
+        }
       }
     }
     .contact {
@@ -120,9 +182,22 @@ const Container = styled.div`
           color: white;
         }
       }
+      .add {
+        z-index: 99;
+      }
     }
     .selected {
       background-color: #9186f3;
+    }
+    
+    .create {
+      width: 90%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      background-color: #ffffff39;
+      cursor: pointer;
     }
   }
   .current-user {
